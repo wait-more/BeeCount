@@ -34,6 +34,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   double? _maxAmount;
   DateTime? _startDate;
   DateTime? _endDate;
+  DateTime? _recordedStartDate;
+  DateTime? _recordedEndDate;
   bool _hasScheduledSearch = false; // 防止重复调度搜索
 
   // 批量操作相关
@@ -64,7 +66,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   void _performSearch() {
     // 如果没有任何搜索条件，清空结果
     if (_searchText.isEmpty && _minAmount == null && _maxAmount == null &&
-        _startDate == null && _endDate == null) {
+        _startDate == null && _endDate == null &&
+        _recordedStartDate == null && _recordedEndDate == null) {
       setState(() {
         _searchResults = [];
         _isSearching = false;
@@ -126,7 +129,30 @@ class _SearchPageState extends ConsumerState<SearchPage> {
         }
       }
 
-      return textMatch && amountMatch && dateMatch;
+      // 记账时间范围搜索
+      bool recordedDateMatch = true;
+      if (_recordedStartDate != null || _recordedEndDate != null) {
+        final recordedAt = transaction.recordedAt;
+        if (recordedAt != null) {
+          if (_recordedStartDate != null) {
+            final startOfDay = DateTime(_recordedStartDate!.year, _recordedStartDate!.month, _recordedStartDate!.day);
+            if (recordedAt.isBefore(startOfDay)) {
+              recordedDateMatch = false;
+            }
+          }
+          if (_recordedEndDate != null) {
+            final endOfDay = DateTime(_recordedEndDate!.year, _recordedEndDate!.month, _recordedEndDate!.day, 23, 59, 59);
+            if (recordedAt.isAfter(endOfDay)) {
+              recordedDateMatch = false;
+            }
+          }
+        } else {
+          // 没有记账时间但筛选了记账时间范围 → 不匹配
+          recordedDateMatch = false;
+        }
+      }
+
+      return textMatch && amountMatch && dateMatch && recordedDateMatch;
     }).toList();
 
     setState(() {
@@ -199,6 +225,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     double? tempMaxAmount = _maxAmount;
     DateTime? tempStartDate = _startDate;
     DateTime? tempEndDate = _endDate;
+    DateTime? tempRecordedStartDate = _recordedStartDate;
+    DateTime? tempRecordedEndDate = _recordedEndDate;
 
     await showDialog(
       context: context,
@@ -332,6 +360,88 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  // 记账时间筛选
+                  Text(l10n.searchRecordedDateFilter, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text(l10n.searchRecordedStartDate),
+                    subtitle: Text(tempRecordedStartDate != null
+                        ? '${tempRecordedStartDate!.year}-${tempRecordedStartDate!.month.toString().padLeft(2, '0')}-${tempRecordedStartDate!.day.toString().padLeft(2, '0')}'
+                        : l10n.searchNotSet),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (tempRecordedStartDate != null)
+                          IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            onPressed: () {
+                              setState(() {
+                                tempRecordedStartDate = null;
+                              });
+                            },
+                          ),
+                        IconButton(
+                          icon: const Icon(Icons.calendar_today, size: 20),
+                          onPressed: () async {
+                            final date = await showWheelDatePicker(
+                              context,
+                              initial: tempRecordedStartDate ?? DateTime.now(),
+                              mode: WheelDatePickerMode.ymd,
+                              minDate: DateTime(2000),
+                              maxDate: DateTime.now(),
+                            );
+                            if (date != null) {
+                              setState(() {
+                                tempRecordedStartDate = date;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text(l10n.searchRecordedEndDate),
+                    subtitle: Text(tempRecordedEndDate != null
+                        ? '${tempRecordedEndDate!.year}-${tempRecordedEndDate!.month.toString().padLeft(2, '0')}-${tempRecordedEndDate!.day.toString().padLeft(2, '0')}'
+                        : l10n.searchNotSet),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (tempRecordedEndDate != null)
+                          IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            onPressed: () {
+                              setState(() {
+                                tempRecordedEndDate = null;
+                              });
+                            },
+                          ),
+                        IconButton(
+                          icon: const Icon(Icons.calendar_today, size: 20),
+                          onPressed: () async {
+                            final date = await showWheelDatePicker(
+                              context,
+                              initial: tempRecordedEndDate ?? DateTime.now(),
+                              mode: WheelDatePickerMode.ymd,
+                              minDate: DateTime(2000),
+                              maxDate: DateTime.now(),
+                            );
+                            if (date != null) {
+                              setState(() {
+                                tempRecordedEndDate = date;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -345,12 +455,14 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               TextButton(
                 onPressed: () {
                   // 清空筛选
-                  setState(() {
-                    tempMinAmount = null;
-                    tempMaxAmount = null;
-                    tempStartDate = null;
-                    tempEndDate = null;
-                  });
+                    setState(() {
+                      tempMinAmount = null;
+                      tempMaxAmount = null;
+                      tempStartDate = null;
+                      tempEndDate = null;
+                      tempRecordedStartDate = null;
+                      tempRecordedEndDate = null;
+                    });
                 },
                 child: Text(l10n.searchClearFilter),
               ),
@@ -361,6 +473,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     _maxAmount = tempMaxAmount;
                     _startDate = tempStartDate;
                     _endDate = tempEndDate;
+                    _recordedStartDate = tempRecordedStartDate;
+                    _recordedEndDate = tempRecordedEndDate;
                   });
                   _performSearch();
                   Navigator.pop(context);
@@ -681,7 +795,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                         icon: Icon(
                           Icons.filter_list,
                           color: (_minAmount != null || _maxAmount != null ||
-                                  _startDate != null || _endDate != null)
+                                  _startDate != null || _endDate != null ||
+                                  _recordedStartDate != null || _recordedEndDate != null)
                               ? ref.watch(primaryColorProvider)
                               : BeeTokens.iconPrimary(context),
                         ),
@@ -691,7 +806,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                   ),
                   // 显示已选筛选条件
                   if (_minAmount != null || _maxAmount != null ||
-                      _startDate != null || _endDate != null) ...[
+                      _startDate != null || _endDate != null ||
+                      _recordedStartDate != null || _recordedEndDate != null) ...[
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
@@ -733,6 +849,24 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                               _performSearch();
                             },
                           ),
+                        if (_recordedStartDate != null || _recordedEndDate != null)
+                          Chip(
+                            label: Text(
+                              '${l10n.searchRecordedDateFilter}: ${_recordedStartDate != null ? '${_recordedStartDate!.year}-${_recordedStartDate!.month.toString().padLeft(2, '0')}-${_recordedStartDate!.day.toString().padLeft(2, '0')}' : l10n.searchDateStart} ~ ${_recordedEndDate != null ? '${_recordedEndDate!.year}-${_recordedEndDate!.month.toString().padLeft(2, '0')}-${_recordedEndDate!.day.toString().padLeft(2, '0')}' : l10n.searchDateEnd}',
+                              style: TextStyle(fontSize: 12, color: ref.watch(primaryColorProvider)),
+                            ),
+                            backgroundColor: ref.watch(primaryColorProvider).withValues(alpha: 0.1),
+                            side: BorderSide(color: ref.watch(primaryColorProvider), width: 1),
+                            deleteIconColor: ref.watch(primaryColorProvider),
+                            deleteIcon: const Icon(Icons.close, size: 16),
+                            onDeleted: () {
+                              setState(() {
+                                _recordedStartDate = null;
+                                _recordedEndDate = null;
+                              });
+                              _performSearch();
+                            },
+                          ),
                       ],
                     ),
                   ],
@@ -750,7 +884,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                           _minAmount != null ||
                           _maxAmount != null ||
                           _startDate != null ||
-                          _endDate != null) &&
+                          _endDate != null ||
+                          _recordedStartDate != null ||
+                          _recordedEndDate != null) &&
                       _searchResults.isEmpty &&
                       !_isSearching &&
                       !_hasScheduledSearch) {
@@ -771,7 +907,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     _minAmount == null &&
                     _maxAmount == null &&
                     _startDate == null &&
-                    _endDate == null) {
+                    _endDate == null &&
+                    _recordedStartDate == null &&
+                    _recordedEndDate == null) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
