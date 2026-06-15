@@ -1200,7 +1200,12 @@ LazyDatabase _openConnection() {
       logger.debug('db', '检查锁文件时出错: $e');
     }
 
-    return NativeDatabase.createInBackground(file);
+    return NativeDatabase.createInBackground(
+      file,
+      setup: (rawDb) {
+        rawDb.execute('PRAGMA journal_mode=WAL;');
+      },
+    );
   });
 }
 

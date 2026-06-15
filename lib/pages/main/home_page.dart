@@ -35,7 +35,8 @@ class HomePage extends ConsumerStatefulWidget {
   ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends ConsumerState<HomePage> {
+class _HomePageState extends ConsumerState<HomePage>
+    with WidgetsBindingObserver {
   late FlutterListViewController _listController;
   bool _isJumping = false;
   final GlobalKey<TransactionListState> _transactionListKey =
@@ -49,13 +50,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   int _streamBuilderKey = 0;
   int? _lastLedgerId;
 
+  /// 后台引擎写入数据后，前台 Drift 流不会自动刷新，需要手动触发重建。
+  bool _wasInBackground = false;
+
   // home build 缓存的 tx stream。repo.transactionsWithCategoryAll 内部每次调
   // 都 new StreamController,如果在 build 里直接调,只要 home 因任何 setState
   // (例如 _showBudgetSetupHint / _showLastMonthReminder 异步加载完成)重 build,
   // StreamBuilder 看到 stream 引用变了就重新订阅 → snapshot.data 短暂为 null
   // → fallback 到 cachedFullData(只有前 20 条预加载)→ 等 Drift 推数据 → 切回
   // 完整列表,视觉上"整页闪一下"。这里把 stream 缓存到 State,只在 ledgerId
-  // 变化时重建,无关 setState 重 build 时复用同一 stream 引用。
+  // 变化或后台 resume 时重建，无关 setState 重 build 时复用同一 stream 引用。
   Stream<List<({Transaction t, Category? category, Account? account, Account? toAccount})>>?
       _txStream;
   int? _txStreamLedgerId;
@@ -77,10 +81,28 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _listController = FlutterListViewController();
     _checkLastMonthReminder();
     _checkAnnualReportReminder();
     _checkBudgetSetupHint();
+  }
+
+  /// 后台切前台时强制刷新首页。
+  ///
+  /// 摇一摇记账由后台独立 Engine 落库，前台 Drift 流收不到更新通知。
+  /// 重建数据库连接 + 清空缓存的 _txStream，下次 build 时重新查询 DB。
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _wasInBackground) {
+      _txStream = null;
+      _txStreamLedgerId = null;
+      ref.invalidate(databaseProvider);
+      setState(() {});
+    }
+    _wasInBackground = state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached;
   }
 
   // 检查是否应该显示上月报告提醒
@@ -183,6 +205,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _debounceTimer?.cancel();
     _listController.dispose();
     super.dispose();
