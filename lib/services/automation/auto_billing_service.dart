@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../ai/core/prompt_builder.dart';
 import '../../ai/providers/ai_provider_config.dart';
 import '../../ai/providers/ai_provider_manager.dart';
 import '../../l10n/app_localizations.dart';
@@ -308,6 +309,7 @@ class AutoBillingService {
       pendingAiFuture = _container.read(aiBookkeeperProvider).fromImage(
         image: file,
         ledgerId: ledgerId,
+        billGuard: PromptBuilder.billGuardForImage,
         billingTypes: const [
           TagSeedService.billingTypeImage,
           TagSeedService.billingTypeAi,
