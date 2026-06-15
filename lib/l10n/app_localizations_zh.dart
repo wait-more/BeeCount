@@ -378,7 +378,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchAmountFilter => '金额筛选';
 
   @override
-  String get searchDateFilter => '时间筛选';
+  String get searchDateFilter => '账单时间';
 
   @override
   String get searchStartDate => '开始日期';
@@ -388,6 +388,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get searchNotSet => '未设置';
+
+  @override
+  String get searchRecordedDateFilter => '记账时间';
+
+  @override
+  String get searchRecordedStartDate => '记账起始日期';
+
+  @override
+  String get searchRecordedEndDate => '记账结束日期';
 
   @override
   String get searchClearFilter => '清空筛选';
@@ -7083,7 +7092,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get searchAmountFilter => '金額篩選';
 
   @override
-  String get searchDateFilter => '時間篩選';
+  String get searchDateFilter => '帳單時間';
 
   @override
   String get searchStartDate => '開始日期';
@@ -7093,6 +7102,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get searchNotSet => '未設定';
+
+  @override
+  String get searchRecordedDateFilter => '記帳時間';
+
+  @override
+  String get searchRecordedStartDate => '記帳起始日期';
+
+  @override
+  String get searchRecordedEndDate => '記帳結束日期';
 
   @override
   String get searchClearFilter => '清空篩選';

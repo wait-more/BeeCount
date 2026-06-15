@@ -378,7 +378,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchAmountFilter => 'Amount Filter';
 
   @override
-  String get searchDateFilter => 'Date Filter';
+  String get searchDateFilter => 'Bill Date';
 
   @override
   String get searchStartDate => 'Start Date';
@@ -388,6 +388,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchNotSet => 'Not Set';
+
+  @override
+  String get searchRecordedDateFilter => 'Recording Time';
+
+  @override
+  String get searchRecordedStartDate => 'Recording Start Date';
+
+  @override
+  String get searchRecordedEndDate => 'Recording End Date';
 
   @override
   String get searchClearFilter => 'Clear Filter';

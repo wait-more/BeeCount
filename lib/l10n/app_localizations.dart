@@ -765,7 +765,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchDateFilter.
   ///
   /// In en, this message translates to:
-  /// **'Date Filter'**
+  /// **'Bill Date'**
   String get searchDateFilter;
 
   /// No description provided for @searchStartDate.
@@ -785,6 +785,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not Set'**
   String get searchNotSet;
+
+  /// No description provided for @searchRecordedDateFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording Time'**
+  String get searchRecordedDateFilter;
+
+  /// No description provided for @searchRecordedStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording Start Date'**
+  String get searchRecordedStartDate;
+
+  /// No description provided for @searchRecordedEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording End Date'**
+  String get searchRecordedEndDate;
 
   /// No description provided for @searchClearFilter.
   ///
