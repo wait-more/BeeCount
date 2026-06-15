@@ -112,6 +112,8 @@ class Transactions extends Table {
   IntColumn get accountId => integer().nullable()();
   IntColumn get toAccountId => integer().nullable()();
   DateTimeColumn get happenedAt => dateTime().withDefault(currentDateAndTime)();
+  // v29: 实际记账时间（与 happenedAt 独立，系统设置，不可修改）
+  DateTimeColumn get recordedAt => dateTime().nullable()();
   TextColumn get note => text().nullable()();
   IntColumn get recurringId => integer().nullable()(); // 关联到重复交易模板
   TextColumn get syncId => text().nullable()(); // 跨设备同步唯一标识 (UUID)
@@ -420,7 +422,7 @@ class BeeDatabase extends _$BeeDatabase {
   BeeDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 28; // v28: 多币种 MVP — exchange_rates / exchange_rate_overrides
+  int get schemaVersion => 29; // v29: transactions.recorded_at 记账时间
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1101,6 +1103,12 @@ class BeeDatabase extends _$BeeDatabase {
                 'CREATE UNIQUE INDEX IF NOT EXISTS idx_rate_override_pair '
                 'ON exchange_rate_overrides (base_currency, quote_currency);');
             logger.info('DBMigration', 'v28 迁移完成');
+          }
+          if (from < 29) {
+            logger.info('DBMigration', '开始迁移到 v29: transactions.recorded_at 记账时间');
+            await customStatement(
+                'ALTER TABLE transactions ADD COLUMN recorded_at INTEGER;');
+            logger.info('DBMigration', 'v29 迁移完成');
           }
         },
         onCreate: (m) async {
