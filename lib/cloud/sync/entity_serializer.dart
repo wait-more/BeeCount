@@ -37,6 +37,8 @@ class EntitySerializer {
       'type': tx.type,
       'amount': tx.amount,
       'happenedAt': tx.happenedAt.toUtc().toIso8601String(),
+      if (tx.recordedAt != null)
+        'recordedAt': tx.recordedAt!.toUtc().toIso8601String(),
       'note': tx.note,
       if (ledgerSyncId != null && ledgerSyncId.isNotEmpty)
         'ledgerSyncId': ledgerSyncId,

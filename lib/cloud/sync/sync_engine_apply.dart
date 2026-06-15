@@ -102,6 +102,10 @@ extension SyncEngineApplyExt on SyncEngine {
     final happenedAt = happenedAtStr != null
         ? DateTime.tryParse(happenedAtStr)?.toLocal() ?? DateTime.now()
         : DateTime.now();
+    final recordedAtStr = payload['recordedAt'] as String?;
+    final recordedAt = recordedAtStr != null
+        ? DateTime.tryParse(recordedAtStr)?.toLocal()
+        : null;
     final note = payload['note'] as String?;
     final categoryName = payload['categoryName'] as String?;
     final categoryKind = payload['categoryKind'] as String?;
@@ -201,6 +205,7 @@ extension SyncEngineApplyExt on SyncEngine {
         type: d.Value(type),
         amount: d.Value(amount),
         happenedAt: d.Value(happenedAt),
+        recordedAt: recordedAt != null ? d.Value(recordedAt) : const d.Value.absent(),
         note: d.Value(note),
         categoryId: d.Value(categoryId),
         accountId: d.Value(accountId),
@@ -225,6 +230,7 @@ extension SyncEngineApplyExt on SyncEngine {
               type: type,
               amount: amount,
               happenedAt: d.Value(happenedAt),
+              recordedAt: d.Value(recordedAt),
               note: d.Value(note),
               categoryId: d.Value(categoryId),
               accountId: d.Value(accountId),
