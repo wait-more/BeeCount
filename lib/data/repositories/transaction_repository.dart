@@ -123,6 +123,7 @@ abstract class TransactionRepository {
     int? accountId,
     int? toAccountId,
     required DateTime happenedAt,
+    DateTime? recordedAt,
     String? note,
     String? syncId,
     String? categorySyncIdOverride,
